@@ -8,22 +8,26 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection"); //Read from app secrets on local, else from env in Heroku
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseNpgsql(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
 
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
+builder.Services.AddTransient<SeedService, SeedService>();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IRemoteMovieService, TMDBMovieService>();
 builder.Services.AddScoped<IDataMappingService, TMDBMappingService>();
 builder.Services.AddSingleton<IImageService, BasicImageService>();
 
 var app = builder.Build();
+
+var dataService = app.Services.CreateScope().ServiceProvider.GetRequiredService<SeedService>();
+await dataService.ManageDataAsync();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

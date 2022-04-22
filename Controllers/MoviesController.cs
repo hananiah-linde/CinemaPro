@@ -7,10 +7,12 @@ public class MoviesController : Controller
 {
 
     private readonly IRemoteMovieService _tmdbMovieService;
+    private readonly IDataMappingService _tmdbMappingService;
 
-    public MoviesController(IRemoteMovieService tmdbMovieService)
+    public MoviesController(IRemoteMovieService tmdbMovieService, IDataMappingService mappingService)
     {
         _tmdbMovieService = tmdbMovieService;
+        _tmdbMappingService = mappingService;
     }
 
     public IActionResult Index()
@@ -27,5 +29,18 @@ public class MoviesController : Controller
 
 
         return View(data);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Details(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var movieDetail = await _tmdbMovieService.MovieDetailAsync((int)id);
+        var movie = await _tmdbMappingService.MapMovieDetailAsync(movieDetail);
+
+        if(movie == null) return NotFound();
+
+        return View(movie);
     }
 }

@@ -1,6 +1,8 @@
-﻿using CinemaPro.Models;
+﻿using CinemaPro.Enums;
+using CinemaPro.Models;
 using CinemaPro.Models.CinemaPro;
 using CinemaPro.Models.TMDB;
+using CinemaPro.Models.ViewModels;
 using CinemaPro.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
@@ -17,9 +19,17 @@ public class HomeController : Controller
         _tmdbMovieService = tmdbMovieService;
     }
 
-    public async Task<IActionResult> Index(int id)
+    public async Task<IActionResult> Index()
     {
-        return View();
+        const int count = 16;
+        var data = new LandingPageVM()
+        {
+            NowPlaying = await _tmdbMovieService.SearchMoviesAsync(MovieCategory.now_playing, count),
+            Popular = await _tmdbMovieService.SearchMoviesAsync(MovieCategory.popular, count),
+            TopRated = await _tmdbMovieService.SearchMoviesAsync(MovieCategory.top_rated, count),
+            Upcoming = await _tmdbMovieService.SearchMoviesAsync(MovieCategory.upcoming, count)
+        };
+        return View(data);
     }
 
     public IActionResult Attribution()
